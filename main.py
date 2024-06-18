@@ -4,7 +4,7 @@ import requests
 import datetime
 
 
-date = "2023-11-06"
+date = "2019-06-23"
 TIME_INTERVAL = 600         #in sec
 
 
@@ -42,13 +42,13 @@ def get_data(date: str):
 
 def unzip(date: str):
     print("unzip func")
-    subprocess.call(f"./script.sh {date}", shell=True)
+    subprocess.call(f"./scripts/download_archive.sh {date}", shell=True)
 
 
 def separate_files(date: str):
     subprocess.call(f"./scripts/create_interval_folders.sh {TIME_INTERVAL}", shell=True)
 
 
-get_data(date)
+#get_data(date)
 unzip(date)
 
