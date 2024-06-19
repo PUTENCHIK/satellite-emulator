@@ -1,6 +1,12 @@
 # Технологическая(проектно-технологическая) практика
 ### АВТОРЫ <br /> Шорников Даниил <br /> Олифиренко Максим <br /> Антипин Демид
+
+## Схема работы
+
+![Схема](images/scheme.svg)
+
 ## Main.py
+
 ### Функция по получения zip с данными о определенной дате
 ```python
 def get_data(date: str):
@@ -34,37 +40,50 @@ def get_data(date: str):
                 sys.stdout.write("\r[%s%s]" % ('=' * done, ' ' * (50-done)))
                 sys.stdout.flush()
 ```
+
 ### Функция с запуском download_archive.sh
+
 ```python
 def unzip(date: str):
     print("unzip func")
     subprocess.call(f"./scripts/download_archive.sh {date}", shell=True)
 ```
+
 ### Функция с запуском create_interval_folders.sh
+
 ```python
 def separate_files(date: str):
     subprocess.call(f"./scripts/create_interval_folders.sh {TIME_INTERVAL}", shell=True)
 ```
+
 ## Download_archive.sh
+
 ### Temporary directory for .crx files and archives
+
 ```bash
 if [ -d temporary ]; then
 	rm -r temporary
 fi
 mkdir temporary;
 ```
-### Unzipping main archive 
+
+### Unzipping main archive
+ 
 ```bash
 archive="archives/$1.zip";
 unzip $archive -d temporary/;
 ```
+
 ### Unzipping gz achives
+
 ```bash
 for filename in temporary/*.crx.gz; do
 	gunzip $filename;
 done
 ```
+
 ### Creating directory files/ and special directory for date archive
+
 ```bash
 if ! [ -d files ]; then
 	mkdir files;
