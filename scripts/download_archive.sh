@@ -4,7 +4,7 @@
 if [ -d temporary ]; then
 	rm -r temporary
 fi
-mkdir temporary;
+mkdir  temporary;
 
 # Unzipping main archive 
 archive="archives/$1.zip";
@@ -20,14 +20,14 @@ if ! [ -d files ]; then
 	mkdir files;
 fi
 
-if ! [ -d files/$1 ]; then
-	mkdir files/$1;
-fi
-
 for filename in temporary/*.crx; do
+	station=$(echo $filename | sed 's|temporary/\([^_]*\)_.*|\1|')
+	if ! [ -d files/$station ]; then
+        	mkdir files/$station;
+	fi
 	new_name=${filename::-4}.'rnx';
-	./CRX2RNX $filename;
-	mv $new_name files/$1/;
+	sudo ./CRX2RNX $filename;
+	mv $new_name files/$station/$1.rnx;
 done
 
 rm -r temporary;
