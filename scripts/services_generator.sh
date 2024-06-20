@@ -1,32 +1,31 @@
 #!/bin/bash
 
-
-#template=$(cat services/service_template);
-#path=/home/admin;
-#echo "$template";
-#eval "echo $template";
+template=$(<services/service_template)
 
 user="$(whoami)";
 path="$(pwd)";
 
-for receiver in files/*; do
-	receiver="$(basename $receiver)";
-	template="[Unit]
+for dir in files/*/; do
+    receiver=$(basename "$dir")
 
-	Description=Template of daemon service
-	After=network.target
+    if [[ -f "/etc/systemd/system/$receiver.service" ]]; then
+        continue
+    fi
 
-	[Service]
-
-	ExecStart=/usr/bin/python ${path}/publisher.py $receiver
-	Environment=PYTHONUNBUFFERED=1
-	Restart=on-failure
-	Type=notify
-	User=$user
-
-	[Install]
-
-	WantedBy=default.target"
-
-	echo $template;
+    rnx_file=$(find "$dir" -name '*.rnx' | sort)
+    rnx_file=${rnx_file[0]}
+    
+    if [[ -n $rnx_file ]]; then
+        date=$(basename "$rnx_file")
+        
+        sudo mkdir -p /etc/systemd/system/
+        
+        echo "${template//\$\{path\}/$path}" | \
+        sed "s/\$receiver/$receiver/g" | \
+        sed "s/\$date/$date/g" | \
+        sed "s/\$user/$user/g" | sudo tee "/etc/systemd/system/$receiver.service" > /dev/null
+        
+        sudo systemctl daemon-reload
+        sudo systemctl enable "$receiver.service"
+    fi
 done

@@ -5,7 +5,7 @@ After=network.target
 
 [Service]
 
-ExecStart=/usr/bin/python ${path}/publisher.py $receiver $date
+ExecStart=/usr/bin/python3 ${path}/publisher.py $receiver $date
 Environment=PYTHONUNBUFFERED=1
 Restart=on-failure
 Type=notify
