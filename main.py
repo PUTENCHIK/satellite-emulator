@@ -47,8 +47,32 @@ def unzip(date: str):
 
 def separate_files(date: str):
     subprocess.call(f"./scripts/create_interval_folders.sh {TIME_INTERVAL}", shell=True)
+if __name__ == "__main__":
+    if len(sys.argv) != 2:
+        print("Неправильное количество аргументов. Используйте: python main.py YYYY-MM-DD")
+        sys.exit(1)
 
+    date = sys.argv[1]
 
-#get_data(date)
-unzip(date)
+    # Проверяем корректность даты:
+    try:
+    gotten_date = datetime.date.fromisoformat(date)
+    except ValueError:
+        print("Неправильный формат даты. Используйте YYYY-MM-DD")
+        sys.exit(1)
+
+    if gotten_date > datetime.date.today() - datetime.timedelta(days=1):
+        print("Дата должна быть раньше или равна вчерашнему дню")
+        sys.exit(1)
+
+    # Вызываем функции из второго файла:
+    get_data(date)
+    unzip(date)
+    separate_files(date)
+
+    # Последовательный запуск демонов (в примере не реализовано)
+    print("Запуск демонов...")
+
+    #get_data(date)
+    unzip(date)
 
