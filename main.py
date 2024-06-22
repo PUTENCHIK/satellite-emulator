@@ -4,7 +4,7 @@ import requests
 import datetime
 
 
-date = "2019-06-23"
+#date = "2020-01-01"
 TIME_INTERVAL = 600         #in sec
 
 
@@ -47,6 +47,8 @@ def unzip(date: str):
 
 def separate_files(date: str):
     subprocess.call(f"./scripts/create_interval_folders.sh {TIME_INTERVAL}", shell=True)
+
+
 if __name__ == "__main__":
     if len(sys.argv) != 2:
         print("Неправильное количество аргументов. Используйте: python main.py YYYY-MM-DD")
@@ -56,7 +58,7 @@ if __name__ == "__main__":
 
     # Проверяем корректность даты:
     try:
-    gotten_date = datetime.date.fromisoformat(date)
+        gotten_date = datetime.date.fromisoformat(date)
     except ValueError:
         print("Неправильный формат даты. Используйте YYYY-MM-DD")
         sys.exit(1)
@@ -68,11 +70,10 @@ if __name__ == "__main__":
     # Вызываем функции из второго файла:
     get_data(date)
     unzip(date)
-    separate_files(date)
+    # separate_files(date)
 
     # Последовательный запуск демонов (в примере не реализовано)
-    print("Запуск демонов...")
+#    print("Запуск демонов...")
 
     #get_data(date)
-    unzip(date)
-
+#    unzip(date)
