@@ -7,7 +7,7 @@ from datetime import date
 
 app = FastAPI()
 #date = None
-start_date = "2019-06-23"
+start_date = "2024-05-12"
 stations = ['ABPO00MDG', 'ALBH00CAN', 'ALGO00CAN', 'ALIC00AUS', 'AREG00PER']
 
 
@@ -29,6 +29,9 @@ async def get_stations():
             'stations': stations
     }
 
+@app.get("/path")
+async def get_path():
+    return {"path": os.path.dirname(os.path.abspath(__file__))}
 
 @app.post("/start")
 async def start_emulation(start_date: date):

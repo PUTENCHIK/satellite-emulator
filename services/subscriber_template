@@ -1,0 +1,16 @@
+[Unit]
+
+Description=Template of subscriber daemon
+After=network.target
+
+[Service]
+
+ExecStart=/usr/bin/python3 ${path}/src/subscriber.py
+Environment=PYTHONUNBUFFERED=1
+Restart=on-failure
+Type=simple
+User=$user
+
+[Install]
+
+WantedBy=default.target

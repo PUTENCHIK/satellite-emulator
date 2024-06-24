@@ -5,11 +5,16 @@ After=network.target
 
 [Service]
 
-ExecStart=/usr/bin/python3 ${path}/publisher.py $receiver $date
-Environment=PYTHONUNBUFFERED=1
-Restart=on-failure
-Type=notify
 User=$user
+Group=$user
+#VIRTUAL_ENV=/home/admin/venv
+#Environment=PATH=$VIRTUAL_ENV/bin/python
+#Environment="VIRTUAL_ENV=/home/admin/venv"
+#Environment="PATH=$VIRTUAL_ENV/bin/python"
+Restart=on-failure
+Type=simple
+
+ExecStart=/usr/bin/python3 ${path}/src/publisher.py $receiver
 
 [Install]
 
