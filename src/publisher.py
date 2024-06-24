@@ -62,23 +62,29 @@ def rewrite_reader():
 if __name__ == "__main__":
 
     conf = settings()
+    app_port = conf['app_port']
 
     if len(sys.argv) != 2:
         raise Exception("Неправильное количество аргументов. Необходимо указать название станции")
 
     station = sys.argv[1]
-
-    print(station)
+    
+    response = requests.get(f'http://127.0.0.1:{app_port}/get_path')
+    try:
+        path = response.json()['path']
+    except KeyError:
+        print("Can't get home path from app. Most likely it wasn't started")
 
     if not(os.path.isdir(f"{path}/files/{station}")):
         raise Exception(f"Указанная станция не сущесвует: {station}")
 
     print("Getting date")
-    app_port = conf['app_port']
-    response = requests.get(f'http://127.0.0.1:{app_port}/get_path')
-    path = response.json()['path']
     response = requests.get(f'http://127.0.0.1:{app_port}/get_date')
-    date = response.json()
+    try:
+        date = response.json()['date']
+    except KeyError:
+        print("Can't get date from app. Most likely it wasn't started")
+
     print("Date:", date)
 
     file = open(f"{path}/files/{station}/{date}.rnx")

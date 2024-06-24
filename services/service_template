@@ -7,10 +7,7 @@ After=network.target
 
 User=$user
 Group=$user
-#VIRTUAL_ENV=/home/admin/venv
-#Environment=PATH=$VIRTUAL_ENV/bin/python
-#Environment="VIRTUAL_ENV=/home/admin/venv"
-#Environment="PATH=$VIRTUAL_ENV/bin/python"
+Environment=PYTHONUNBUFFERED=1
 Restart=on-failure
 Type=simple
 

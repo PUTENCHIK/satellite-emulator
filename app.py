@@ -6,8 +6,7 @@ from datetime import date
 
 
 app = FastAPI()
-#date = None
-start_date = "2024-05-12"
+start_date = "2019-06-23"
 stations = ['ABPO00MDG', 'ALBH00CAN', 'ALGO00CAN', 'ALIC00AUS', 'AREG00PER']
 
 
@@ -20,18 +19,22 @@ async def root():
 async def get_date():
     if start_date is None:
         print("Call /start to set date")
-    return start_date
+
+    return {"date": start_date}
 
 
 @app.get("/get_stations")
 async def get_stations():
-    return {
-            'stations': stations
-    }
+    if stations is None:
+        print("List of stations hasn't been set. Do it using /start")
 
-@app.get("/path")
+    return {"stations": stations}
+
+
+@app.get("/get_path")
 async def get_path():
     return {"path": os.path.dirname(os.path.abspath(__file__))}
+
 
 @app.post("/start")
 async def start_emulation(start_date: date):
@@ -40,24 +43,6 @@ async def start_emulation(start_date: date):
     for emulating publishing data from files.
     """
 
-#    os.system("src/subscriber.py")
-#    subprocess.run(["python", "src/subscriber.py"])
     subprocess.call(f"./scripts/run_subscriber.sh")
     
     return {'status': 'okay'}
-    # Преобразуем дату в строковый формат YYYY-MM-DD
-#    date_str = date.isoformat()
-
-    # Запуск main.py с помощью subprocess
- #   subprocess.run(["python", "main.py", date_str])
-
-    # Оставшаяся логика:
-    # 1. Вызов get_data(date_str) из второго файла
-    # 2. Вызов unzip(date_str) из второго файла
-    # 3. Вызов separate_files(date_str) из второго файла
-    # 4. Запуск демонов (пока в примере не реализовано)
-
-#    return {"message": f"Emulation started for date {date_str}"}
-
-
-#if __name__ == "__main__":

@@ -1,6 +1,7 @@
 import requests
 import paho.mqtt.client as mqtt_client
 import time
+from datetime import datetime
 
 from config import settings
 
@@ -15,7 +16,7 @@ def check_client_activity():
 
 def on_message(client, userdata, message):
     data = str(message.payload.decode("utf-8"))
-    print("received message =", data)
+    print(f"\nReceived at {datetime.now()}: {data}\n")
     last_message_times[message.topic] = time.time()
 
 
@@ -31,7 +32,10 @@ client.loop_start()
 
 app_port = conf['app_port']
 response = requests.get(f"http://127.0.0.1:{app_port}/get_stations")
-stations = response.json()['stations']
+try:
+    stations = response.json()['stations']
+except KeyError:
+    print("Can't get stations from app. Most likely it wasn't started")
 
 for station in stations:
     client.subscribe(station)
