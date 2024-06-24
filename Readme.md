@@ -5,97 +5,52 @@
 
 ![Схема](images/scheme.svg)
 
-## Main.py
+## Satellite Emulator
 
-### Функция по получения zip с данными о определенной дате
-```python
-def get_data(date: str):
-    try:
-        gotten_date = datetime.date.fromisoformat(date)
-    except ValueError:
-        raise ValueError("Incorrect data format, should be YYYY-MM-DD")
+Этот проект представляет собой симулятор, который эмулирует публикацию данных со спутников.
 
-    if gotten_date > datetime.date.today() - datetime.timedelta(days=1):
-        raise Exception(f"Gotten date must be early then today")
+### Описание
 
-    link = f"https://api.simurg.space/datafiles/map_files?date={date}"
-    file_name = f"archives/{date}.zip"
-    with open(file_name, "wb") as f:
-        print(f"Downloading {file_name}")
-        response = requests.get(link, stream=True)
-        total_length = response.headers.get('content-length')
+Проект разработан для:
 
-        if response.json()['detail'] == "Map files not foud":
-            raise Exception(f"Sorry but storage doesn't save archive for date {date}")
+- Тестирования систем обработки данных со спутников.
+- Разработки и отладки алгоритмов обработки спутниковых данных.
+- Обучения работе с данными со спутников.
 
-        if total_length is None:
-            f.write(response.content)
-        else:
-            dl = 0
-            total_length = int(total_length)
-            for data in response.iter_content(chunk_size=4096):
-                dl += len(data)
-                f.write(data)
-                done = int(50 * dl / total_length)
-                sys.stdout.write("\r[%s%s]" % ('=' * done, ' ' * (50-done)))
-                sys.stdout.flush()
-```
+### Функциональность
 
-### Функция с запуском download_archive.sh
+- Генерация данных: С помощью API https://api.simurg.space/datafiles/map_files проект загружает архивные данные со спутника.
+- Обработка данных: Архивы распаковываются и разделяются на временные интервалы.
+- Публикация данных: Симулируется публикация данных через демонов, которые могут быть реализованы в соответствии с требованиями проекта.
 
-```python
-def unzip(date: str):
-    print("unzip func")
-    subprocess.call(f"./scripts/download_archive.sh {date}", shell=True)
-```
+### Установка
 
-### Функция с запуском create_interval_folders.sh
+1. Клонирование репозитория:
+git clone https://github.com/PUTENCHIK/satellite-emulator.git
+cd satellite-emulator
 
-```python
-def separate_files(date: str):
-    subprocess.call(f"./scripts/create_interval_folders.sh {TIME_INTERVAL}", shell=True)
-```
 
-## Download_archive.sh
+2. Установка зависимостей:
+pip install -r requirements.txt
 
-### Temporary directory for .crx files and archives
 
-```bash
-if [ -d temporary ]; then
-	rm -r temporary
-fi
-mkdir temporary;
-```
+3. Настройка скриптов:
+- download_archive.sh: Скрипт для загрузки и распаковки архивов.
+- create_interval_folders.sh: Скрипт для создания папок с временными интервалами.
+- run_daemons.sh: Скрипт для запуска демонов (необходимо реализовать).
 
-### Unzipping main archive
- 
-```bash
-archive="archives/$1.zip";
-unzip $archive -d temporary/;
-```
+### Запуск
 
-### Unzipping gz achives
+1. Запуск сервера FastAPI:
+uvicorn app:app —reload
 
-```bash
-for filename in temporary/*.crx.gz; do
-	gunzip $filename;
-done
-```
 
-### Creating directory files/ and special directory for date archive
+2. Запуск эмуляции:
+- Откройте браузер и перейдите по адресу http://127.0.0.1:8000/start.
+- Введите дату в формате YYYY-MM-DD (например, 2023-03-15) в поле date и нажмите "Start".
 
-```bash
-if ! [ -d files ]; then
-	mkdir files;
-fi
+### Дальнейшие шаги
 
-if ! [ -d files/$1 ]; then
-	mkdir files/$1;
-fi
-
-for filename in temporary/*.crx; do
-	new_name=${filename::-4}.'rnx';
-	./CRX2RNX $filename;
-	mv $new_name files/$1/;
-done
-```
+- Реализовать демонов для эмуляции публикации данных.
+- Добавить функциональность для настройки временных интервалов и форматов данных.
+- Документировать скрипты и API.
