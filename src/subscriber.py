@@ -16,7 +16,12 @@ def check_client_activity():
 
 def on_message(client, userdata, message):
     data = str(message.payload.decode("utf-8"))
-    print(f"\nReceived at {datetime.now()}: {data}\n")
+    print(f"\nReceived data at {datetime.now()}")
+    data = data.split("|")
+    for i, row in enumerate(data):
+        print(f"\t {i+1} row: {row}")
+    print("\n")
+
     last_message_times[message.topic] = time.time()
 
 

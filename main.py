@@ -1,14 +1,16 @@
+import os
 import subprocess
 import sys
 import requests
 import datetime
 
+from src.exceptions import ArchiveAlreadyDownloaded
 
 #date = "2020-01-01"
 TIME_INTERVAL = 600         #in sec
 
 
-def get_data(date: str):
+async def get_data(date: str):
     try:
         gotten_date = datetime.date.fromisoformat(date)
     except ValueError:
@@ -19,6 +21,10 @@ def get_data(date: str):
 
     link = f"https://api.simurg.space/datafiles/map_files?date={date}"
     file_name = f"archives/{date}.zip"
+
+    if os.path.exists(file_name):
+        raise ArchiveAlreadyDownloaded(file_name)
+
     with open(file_name, "wb") as f:
         print(f"Downloading {file_name}")
         response = requests.get(link, stream=True)
