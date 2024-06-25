@@ -7,6 +7,7 @@ user="$(whoami)";
 path="$(pwd)";
 
 if [[ -f "/etc/systemd/system/subscriber.service" ]]; then
+	sudo systemctl start "subscriber.service"
 	exit 1;
 fi
 
