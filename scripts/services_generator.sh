@@ -7,17 +7,13 @@ scripts/logger.sh "$me" 'info' "Called $me script"
 # Reading content of template of daemons
 template=$(<templates/service_template)
 
-echo "Template: $template";
-
 user="$(whoami)";
 path="$(pwd)";
 stations=("$@")
 
 sudo mkdir -p /etc/systemd/system/
 
-for station in "${stations[@]}"; do	
-	echo "Arg: $station";
-
+for station in "${stations[@]}"; do
 	# Checkimg directory of station exists
 	if ! [[ -d "$path/files/$station" ]]; then
 		scripts/logger.sh "$me" 'warning' "Directory of station $station doesn't exist" 
