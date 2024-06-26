@@ -48,13 +48,14 @@ async def get_data(date: str):
 
 def unzip(date: str):
     print("unzip func")
-    subprocess.call(f"./scripts/download_archive.sh {date}", shell=True)
+    subprocess.call(f"./scripts/prepare_files.sh {date}", shell=True)
 
 
 def separate_files(date: str):
     subprocess.call(f"./scripts/create_interval_folders.sh {TIME_INTERVAL}", shell=True)
 
 
+"""
 if __name__ == "__main__":
     if len(sys.argv) != 2:
         print("Неправильное количество аргументов. Используйте: python main.py YYYY-MM-DD")
@@ -62,7 +63,6 @@ if __name__ == "__main__":
 
     date = sys.argv[1]
 
-    # Проверяем корректность даты:
     try:
         gotten_date = datetime.date.fromisoformat(date)
     except ValueError:
@@ -73,13 +73,6 @@ if __name__ == "__main__":
         print("Дата должна быть раньше или равна вчерашнему дню")
         sys.exit(1)
 
-    # Вызываем функции из второго файла:
     get_data(date)
     unzip(date)
-    # separate_files(date)
-
-    # Последовательный запуск демонов (в примере не реализовано)
-#    print("Запуск демонов...")
-
-    #get_data(date)
-#    unzip(date)
+"""

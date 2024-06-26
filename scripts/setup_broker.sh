@@ -1,5 +1,8 @@
 #!/bin/bash
 
+me=$(basename "$0");
+scripts/logger.sh "$me" 'info' "Called $me script"
+
 # Обновление списка пакетов
 sudo apt-get update
 
@@ -35,3 +38,5 @@ sudo systemctl enable mosquitto
 
 # Проверка статуса Mosquitto
 sudo systemctl status mosquitto
+
+scripts/logger.sh "$me" 'info' "Broker setuped"

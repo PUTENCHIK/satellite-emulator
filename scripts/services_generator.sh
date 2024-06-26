@@ -1,7 +1,13 @@
 #!/bin/bash
 
+
+me=$(basename "$0");
+scripts/logger.sh "$me" 'info' "Called $me script"
+
 # Reading content of template of daemons
-template=$(<services/service_template)
+template=$(<templates/service_template)
+
+echo "Template: $template";
 
 user="$(whoami)";
 path="$(pwd)";
@@ -9,25 +15,21 @@ stations=("$@")
 
 sudo mkdir -p /etc/systemd/system/
 
-for station in "${stations[@]}"; do
-	# Getting name of station
-#	station=$(basename "$dir")
-	
+for station in "${stations[@]}"; do	
 	echo "Arg: $station";
 
-	# If necessary daemon already exists, iteration will be skip
+	# Checkimg directory of station exists
 	if ! [[ -d "$path/files/$station" ]]; then
-		echo "Directory of station $station doesn't exist";
+		scripts/logger.sh "$me" 'warning' "Directory of station $station doesn't exist" 
 		continue;
 	fi
 	
+	# Checking daemon's file already exists
 	if [[ -f "/etc/systemd/system/$station.service" ]]; then
-		echo "Init file of station $station already exists"
+		scripts/logger.sh "$me" 'debug' "Config file of station $station already exists"
+		sudo systemctl start "$station.service"
 		continue;
 	fi
-	
-	# Selection of date from filename
-#	sudo mkdir -p /etc/systemd/system/
 
 	# Inserting         
 	echo "${template//\$\{path\}/$path}" | \
@@ -35,6 +37,7 @@ for station in "${stations[@]}"; do
 	sed "s/\$user/$user/g" | sudo tee "/etc/systemd/system/$station.service" > /dev/null
 
 	sudo systemctl daemon-reload
-#	sudo systemctl enable "$station.service"
 	sudo systemctl start "$station.service"
+	#sudo systemctl enable "$station.service"
+	scripts/logger.sh "$me" 'debug' "Station $station's daemon created and started"
 done
