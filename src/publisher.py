@@ -1,13 +1,12 @@
 import sys
 import os
 import requests
-import warnings
 import time
 import schedule
 import paho.mqtt.client as mqtt_client
 from datetime import datetime, timedelta
 from gnss_tec import rnx
-
+from models import Logger
 from config import settings
 
 
@@ -68,14 +67,15 @@ if __name__ == "__main__":
         raise Exception("Неправильное количество аргументов. Необходимо указать название станции")
 
     station = sys.argv[1]
-    
+    log = Logger.Logger(f'station {station}')    
     response = requests.get(f'http://127.0.0.1:{app_port}/get_path')
     try:
         path = response.json()['path']
     except KeyError:
-        print("Can't get home path from app. Most likely it wasn't started")
+        log.add_error("Can't get home path from app. Most likely it wasn't started")
 
     if not(os.path.isdir(f"{path}/files/{station}")):
+        log.add_error(f'Указанная станция не существует: {station}')
         raise Exception(f"Указанная станция не сущесвует: {station}")
 
     print("Getting date")
@@ -83,10 +83,7 @@ if __name__ == "__main__":
     try:
         date = response.json()['date']
     except KeyError:
-        print("Can't get date from app. Most likely it wasn't started")
-
-    print("Date:", date)
-
+        log.add_error("Can't get date from app. Most likely it wasn't started")
     file = open(f"{path}/files/{station}/{date}.rnx")
     reader = rnx(file)
 
@@ -134,8 +131,7 @@ if __name__ == "__main__":
         while True:
             if time.time() % 30 < 0.1:
                 client.publish(station, publishing_string)
-                print(f"\nSystemTime:{datetime.now()} \nTime: {time.time() % 30}\n")
-                print('Published:', publishing_string)
+                log.add_info(f'Published: {publishing_string}')
                 time.sleep(1)
                 break
             else:
