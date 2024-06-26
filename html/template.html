@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            margin: 0;
+            height: 90vh;
+            display: flex;
+            flex-direction: column;
+        }
+        h1 {
+            text-align: center;
+        }
+        #logContainer {
+            flex: 1;
+            overflow-y: scroll;
+        }
+        #logTable {
+            width: 80%;
+	    left: 10%;
+            border-collapse: collapse;
+            position: relative;
+        }
+        #logTable thead th {
+            position: sticky;
+            top: 0;
+            background-color: #fff;
+            border: 1px solid black;
+        }
+        #logTable th, #logTable td {
+            padding: 5px;
+            text-align: left;
+            border: 1px solid black;
+        }
+    </style>
+</head>
+<body>
+    <h1>Subscriber Stream</h1>
+    <div id="logContainer">
+        <table id="logTable">
+            <thead>
+                <tr>
+                    <th>Timestamp</th>
+                    <th>Type</th>
+                    <th>Source</th>
+                    <th>Message</th>
+                </tr>
+            </thead>
+            <tbody id="logBody">
+            </tbody>
+        </table>
+    </div>
+    <script>
+        let ws = new WebSocket("ws://" + window.location.host + "/ws");
+        ws.onmessage = function(event) {
+            let logData = event.data.split(' ');
+            let row = document.createElement("tr");
+            let timestamp = document.createElement("td");
+            let type = document.createElement("td");
+            let source = document.createElement("td");
+            let message = document.createElement("td");
+
+            timestamp.textContent = logData[0] + ' ' + logData[1];
+            type.textContent = logData[3]; // Предполагается, что тип сообщения всегда находится на четвертой позиции
+            source.textContent = logData[2];
+            message.textContent = logData.slice(4).join(' ');
+
+            row.append(timestamp);
+            row.append(type);
+            row.append(source);
+            row.append(message);
+
+            document.getElementById("logBody").append(row);
+
+            // Прокрутка к последней записи
+            let logContainer = document.getElementById("logContainer");
+            logContainer.scrollTop = logContainer.scrollHeight;
+        };
+    </script>
+</body>
+</html>

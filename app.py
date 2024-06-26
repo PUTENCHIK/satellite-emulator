@@ -2,9 +2,10 @@ import time
 import os
 import subprocess
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, WebSocket
+from fastapi.responses import HTMLResponse
 from datetime import date
-
+import asyncio
 from main import get_data, unzip
 from src.schemas import StartEmulation
 from src.exceptions import ArchiveAlreadyDownloaded
@@ -17,9 +18,36 @@ start_date = None
 stations = []
 
 
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    file_path = "logs.log"
+    try:
+        # Получаем текущую длину файла при первом подключении
+        with open(file_path, "r") as file:
+            file.seek(0, os.SEEK_END)
+            position = file.tell()
+
+        while True:
+            with open(file_path, "r") as file:
+                file.seek(position)
+                new_lines = file.readlines()
+                position = file.tell()  # Обновляем позицию для следующего чтения
+                for line in new_lines:
+                    if 'station' not in line:
+                        await websocket.send_text(line)
+            await asyncio.sleep(1)  # Пауза перед следующим чтением файла
+    except Exception as e:
+        await websocket.close()
+        print(f"WebSocket closed with exception: {e}")
+
 @app.get("/")
-async def root():
-    return {"message": "Hello on root of Satellite Emulator app"}
+async def get_root():
+    # HTML и JavaScript код для открытия WebSocket соединения и отображения данных
+    index_file= 'html/template.html'
+    with open(index_file, 'r', encoding='utf-8') as file:
+        html_content = file.read()
+        return HTMLResponse(content=html_content)
 
 
 @app.get("/get_date")
