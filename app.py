@@ -19,8 +19,7 @@ from src.models import Logger
 
 
 app = FastAPI()
-#start_date = None
-start_date = "2019-06-25"
+start_date = None
 stations = []
 
 log=Logger.Logger("App.py")
@@ -40,11 +39,11 @@ async def websocket_endpoint(websocket: WebSocket):
             with open(file_path, "r") as file:
                 file.seek(position)
                 new_lines = file.readlines()
-                position = file.tell()  # Обновляем позицию для следующего чтения
+                position = file.tell()
                 for line in new_lines:
                     if 'subscriber' in line:
                         await websocket.send_text(line)
-            await asyncio.sleep(1)  # Пауза перед следующим чтением файла
+            await asyncio.sleep(1)
     except Exception as e:
         await websocket.close()
         log.add_error(f"WebSocket closed with exception: {e}")
@@ -52,7 +51,6 @@ async def websocket_endpoint(websocket: WebSocket):
 
 @app.get("/")
 async def get_root():
-    # HTML и JavaScript код для открытия WebSocket соединения и отображения данных
     index_file= 'html/template.html'
     with open(index_file, 'r', encoding='utf-8') as file:
         html_content = file.read()
@@ -75,10 +73,8 @@ async def get_all_stations():
 
 @app.get("/show_stations")
 async def show_stations() -> dict:
-    """
-
-    """
-    stations = get_all_stations()['stations']
+    stations_dict = await get_all_stations()
+    stations = stations_dict['stations']
     arr = {}
 
     for station in stations:
@@ -99,7 +95,8 @@ async def get_stations():
 
 @app.get("/get_active_services")
 async def get_active_services():
-    stations = get_all_stations()['stations']
+    stations_dict = await get_all_stations()
+    stations = stations_dict['stations']
     arr = []
 
     for station in stations:
@@ -122,7 +119,6 @@ async def get_active_services():
 
 @app.get("/get_path")
 async def get_path():
-#    return {"path": os.path.dirname(os.path.abspath(__file__))}
     return {"path": path}
 
 

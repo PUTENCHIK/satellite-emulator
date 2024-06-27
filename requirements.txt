@@ -1,3 +1,6 @@
 requests
 gnss-tec==1.1.1
-fastapi
+fastapi[all]
+uvicorn
+paho-mqtt
+schedule
