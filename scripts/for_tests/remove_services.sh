@@ -13,6 +13,15 @@ if [[ -f "/etc/systemd/system/subscriber.service" ]]; then
 	scripts/logger.sh "$me" 'debug' 'subscriber.service removed'
 fi
 
+# Removing subscriber's daemon
+if [[ -f "/etc/systemd/system/file_preparer.service" ]]; then
+        sudo systemctl stop "file_preparer.service";
+        sudo systemctl disable "file_preparer.service";
+        sudo rm -f "/etc/systemd/system/file_preparer.service";
+
+        scripts/logger.sh "$me" 'debug' 'file_preparer.service removed'
+fi
+
 # Removing stations' daemons
 for dir in files/*/; do
         station=$(basename "$dir")

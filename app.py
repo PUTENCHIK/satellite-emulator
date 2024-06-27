@@ -6,18 +6,25 @@ from fastapi import FastAPI, HTTPException, WebSocket
 from fastapi.responses import HTMLResponse
 from datetime import datetime, date
 import asyncio
-from main import get_data, unzip
+from main import (get_data,
+                  unzip,
+                  check_stations,
+                  try_download
+)
 from src.schemas import StartEmulation, Stations
-from src.exceptions import ArchiveAlreadyDownloaded
+from src.exceptions import (
+    ArchiveAlreadyDownloaded, DateIsTooLate, NoDataInStorage, IncorrectDate
+)
 from src.models import Logger
 
+
 app = FastAPI()
-#start_date = "2019-06-23"
-#stations = ['ABPO00MDG', 'ALBH00CAN', 'ALGO00CAN', 'ALIC00AUS', 'AREG00PER']
-start_date = None
+#start_date = None
+start_date = "2019-06-25"
 stations = []
 
 log=Logger.Logger("App.py")
+path = os.path.dirname(os.path.abspath(__file__))
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
@@ -60,17 +67,23 @@ async def get_date():
     return {"date": start_date}
 
 
+@app.get("/get_all_stations")
+async def get_all_stations():
+    stations = [d for d in os.listdir("./files/")]
+    return {'stations': stations}
+
+
 @app.get("/show_stations")
 async def show_stations() -> dict:
     """
 
     """
-    stations = get_all_stations()
+    stations = get_all_stations()['stations']
     arr = {}
 
     for station in stations:
         arr[station] = []
-        for d in os.listdir(f"./files/{station}"):
+        for d in os.listdir(f"{path}/files/{station}"):
             arr[station] += [d.split(".")[0]]
 
     return {"stations": arr}
@@ -86,7 +99,7 @@ async def get_stations():
 
 @app.get("/get_active_services")
 async def get_active_services():
-    stations = get_all_stations()
+    stations = get_all_stations()['stations']
     arr = []
 
     for station in stations:
@@ -105,39 +118,24 @@ async def get_active_services():
             continue
 
     return {"active_services": arr}
-
-
-def get_all_stations() -> list:
-    stations = [d for d in os.listdir("./files/")]
-    return stations
-
-
-def check_stations(arr: list):
-    global stations
-
-    stations = []
-    directories = get_all_stations()    
-    for station in arr:
-        if station in directories:
-            stations += [station]
     
 
 @app.get("/get_path")
 async def get_path():
-    return {"path": os.path.dirname(os.path.abspath(__file__))}
+#    return {"path": os.path.dirname(os.path.abspath(__file__))}
+    return {"path": path}
 
 
-async def try_download(i = 1) -> bool:
-    if i > 5:
-        return False
+async def prepare_files(date: str):
+    log.add_info("Trying to download archive")
+    result = await try_download(start_date)
 
-    try:
-        await get_data(start_date)
-        return True
-    except (ArchiveAlreadyDownloaded, DateIsTooLate, NoDataInStorage, IncorrectDate):
-        return False
-    except Exception as ex:
-        return try_download(i+1)
+    log.add_info("Unpacking zip")
+    if result['status']:
+        result['status'] = await unzip(start_date)
+        log.add_info("Archive has been unpacked")
+
+    return result
 
 
 @app.post("/start")
@@ -146,34 +144,35 @@ async def start_emulation(data: StartEmulation):
     Gets date of start emulation. Then prepare RINEX files with data and start system daemons
     for emulating publishing data from files.
     """
-    global start_date
+    global start_date, stations, path
 
     start_date = data.start_date.strftime("%Y-%m-%d")
-    log.add_info("Getting data in /start")
-    result = try_download()
-    log.add_info("Data is gotten")
-    log.add_info("Unpacking zip")
-    await unzip(start_date)
-    log.add_info("Archive has been unpacked")
+
+    result = prepare_files(start_date)
+
     log.add_info("Call check_stations()")
-    check_stations(data.stations)
-    if len(stations) == 0:
-        log.add_error("Of the transmitted stations, there are none that were on the transmitted date")
-        raise HTTPException(status_code=404,
-                            detail="Of the transmitted stations, there are none that were on the transmitted date")
+    if result['status'] or isinstance(result['ex'], ArchiveAlreadyDownloaded):
+        stations = check_stations(data.stations)
 
-    str_stations = " ".join(stations)
-    log.add_info("Removing all old services")
-    subprocess.call("./scripts/for_tests/remove_services.sh", shell=True)
-    log.add_info("Generating services' generator")
-    subprocess.call(f"./scripts/services_generator.sh {str_stations}", shell=True)
+        if len(stations) == 0:
+            log.add_error("Of the transmitted stations, there are none that were on the transmitted date")
+            raise HTTPException(status_code=404,
+                                detail="Of the transmitted stations, there are none that were on the transmitted date")
 
-    print(data.start_date)
-    print(data.stations)
+        str_stations = " ".join(stations)
+        log.add_info("Removing all old services")
+        subprocess.call("./scripts/for_tests/remove_services.sh", shell=True)
+        log.add_info("Generating services' generator")
+        subprocess.call(f"./scripts/services_generator.sh {str_stations}", shell=True)
 
-    subprocess.call(f"./scripts/run_subscriber.sh", shell=True)
+        print(data.start_date)
+        print(data.stations)
+
+        subprocess.call(f"./scripts/run_subscriber.sh", shell=True)
     
-    return {'status': 'okay'}
+        return {'success': True}
+    else:
+        return {'status': False, 'description': "Too late date or no data in storage for date"}
 
 
 @app.post("/stop")
