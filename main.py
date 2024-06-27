@@ -3,7 +3,6 @@ import subprocess
 import sys
 import requests
 import datetime
-
 from src.exceptions import ArchiveAlreadyDownloaded, DateIsTooLate
 from src.config import settings
 
@@ -57,7 +56,7 @@ async def get_data(date: str):
                 sys.stdout.flush()
 
 
-def unzip(date: str):
+async def unzip(date: str):
     print("unzip func")
     subprocess.call(f"./scripts/prepare_files.sh {date}", shell=True)
 

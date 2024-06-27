@@ -9,7 +9,7 @@ import asyncio
 from main import get_data, unzip
 from src.schemas import StartEmulation, Stations
 from src.exceptions import ArchiveAlreadyDownloaded
-
+from src.models import Logger
 
 app = FastAPI()
 #start_date = "2019-06-23"
@@ -17,6 +17,7 @@ app = FastAPI()
 start_date = None
 stations = []
 
+log=Logger.Logger("App.py")
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
@@ -34,12 +35,12 @@ async def websocket_endpoint(websocket: WebSocket):
                 new_lines = file.readlines()
                 position = file.tell()  # Обновляем позицию для следующего чтения
                 for line in new_lines:
-                    if 'station' not in line:
+                    if 'subscriber' in line:
                         await websocket.send_text(line)
             await asyncio.sleep(1)  # Пауза перед следующим чтением файла
     except Exception as e:
         await websocket.close()
-        print(f"WebSocket closed with exception: {e}")
+        log.add_error(f"WebSocket closed with exception: {e}")
 
 
 @app.get("/")
@@ -54,7 +55,7 @@ async def get_root():
 @app.get("/get_date")
 async def get_date():
     if start_date is None:
-        print("Call /start to set date")
+        log.add_info("Call /start to set date")
 
     return {"date": start_date}
 
@@ -78,7 +79,7 @@ async def show_stations() -> dict:
 @app.get("/get_stations")
 async def get_stations():
     if stations is None:
-        print("List of stations hasn't been set. Do it using /start")
+        log.add_info("List of stations hasn't been set. Do it using /start")
 
     return {"stations": stations}
 
@@ -148,28 +149,23 @@ async def start_emulation(data: StartEmulation):
     global start_date
 
     start_date = data.start_date.strftime("%Y-%m-%d")
-    
-    print("Getting data in /start")
+    log.add_info("Getting data in /start")
     result = try_download()
-    print("Data is gotten")
-
-    print("Unpacking zip")
+    log.add_info("Data is gotten")
+    log.add_info("Unpacking zip")
     await unzip(start_date)
-    print("Archive has been unpacked")
-    
-
-    print("Call check_stations()")
+    log.add_info("Archive has been unpacked")
+    log.add_info("Call check_stations()")
     check_stations(data.stations)
     if len(stations) == 0:
+        log.add_error("Of the transmitted stations, there are none that were on the transmitted date")
         raise HTTPException(status_code=404,
                             detail="Of the transmitted stations, there are none that were on the transmitted date")
 
     str_stations = " ".join(stations)
-
-    print("Removing all old services")
+    log.add_info("Removing all old services")
     subprocess.call("./scripts/for_tests/remove_services.sh", shell=True)
-
-    print("Generating services' generator")
+    log.add_info("Generating services' generator")
     subprocess.call(f"./scripts/services_generator.sh {str_stations}", shell=True)
 
     print(data.start_date)
@@ -183,7 +179,7 @@ async def start_emulation(data: StartEmulation):
 @app.post("/stop")
 async def stop_emulation(data: Stations):
     str_stations = " ".join(data.stations)
-    print("Stations", str_stations)
+    log.add_info(f"Stop Stations {str_stations}")
 
     subprocess.call(f"./scripts/stop_services.sh {str_stations}", shell=True)
     return {"status": "stopped"}
@@ -192,7 +188,7 @@ async def stop_emulation(data: Stations):
 @app.post("/restart")
 async def restart_emulation(data: Stations):
     str_stations = " ".join(data.stations)
-    print("Stations", str_stations)
+    log.add_info(f"Stop Stations {str_stations}")
 
     subprocess.call(f"./scripts/restart_services.sh {str_stations}", shell=True)
     return {"status": "restarted"}
@@ -205,9 +201,9 @@ async def set_next_date():
     if datetime.now().time() > time(23, 59, 30):
         new_date = datetime.strptime(start_date, "%Y-%m-%d") + timedelta(days=1)
         start_date = new_date.strftime("%Y-%m-%d") 
-
+        log.add_info(f"Date was updated to {start_date} at {datetime.now()}")
         print(f"Date was updated to {start_date} at {datetime.now()}")
     else:
         print("Could be changed at least 23:59:30")
-
+        log.add_info("Could be changed at least 23:59:30")
     return {"app_date": start_date}
