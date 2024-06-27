@@ -10,15 +10,6 @@ from models import Logger
 from config import settings
 
 
-def tec_to_string(tec) -> str:
-    return '{} {}: {} {}'.format(
-                tec.timestamp,
-                tec.satellite,
-                tec.phase_tec,
-                tec.p_range_tec,
-            )
-
-
 def read_file(reader):
     global date
 
@@ -27,12 +18,10 @@ def read_file(reader):
     for tec in reader:
         if len(arr) == 0:
             phase = tec.timestamp.second
-#            arr += [tec_to_string(tec)]
             arr += [tec]
         else:
             i_phase = tec.timestamp.second
             if phase == i_phase:
-#                arr += [tec_to_string(tec)]
                 arr += [tec]
             else:
                 yield arr
@@ -42,7 +31,7 @@ def read_file(reader):
 
 
 def rewrite_reader():
-    global reader, date
+    global reader, date, arr
 
     print("Changing date")
 
@@ -53,6 +42,7 @@ def rewrite_reader():
     if os.path.exists(new_path):
         file = open(new_path)
         reader = rnx(file)
+        arr = read_file(reader)
     else:
         print("File with new date doesn't exists")
         sys.exit(1)

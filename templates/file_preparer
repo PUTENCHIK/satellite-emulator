@@ -1,0 +1,18 @@
+[Unit]
+
+Description=Template of daemon service
+After=network.target
+
+[Service]
+
+User=$user
+Group=$user
+Environment=PYTHONUNBUFFERED=1
+Restart=on-failure
+Type=simple
+
+ExecStart=/usr/bin/python3 ${path}/src/file_preparer.py
+
+[Install]
+
+WantedBy=default.target
