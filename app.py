@@ -1,10 +1,9 @@
-import time
 import os
 import subprocess
 
 from fastapi import FastAPI, HTTPException, WebSocket
 from fastapi.responses import HTMLResponse
-from datetime import datetime, date
+from datetime import datetime, date, timedelta, time
 import asyncio
 from main import (get_data,
                   unzip,
@@ -67,8 +66,11 @@ async def get_date():
 
 @app.get("/get_all_stations")
 async def get_all_stations():
-    stations = [d for d in os.listdir("./files/")]
-    return {'stations': stations}
+    if os.path.isdir("./files/"):
+        stations = [d for d in os.listdir("./files/")]
+        return {'stations': stations}
+    else:
+        return {'stations': None, 'description': "No directory files/"}
 
 
 @app.get("/show_stations")
@@ -76,6 +78,9 @@ async def show_stations() -> dict:
     stations_dict = await get_all_stations()
     stations = stations_dict['stations']
     arr = {}
+
+    if stations is None:
+        return stations_dict
 
     for station in stations:
         arr[station] = []
@@ -87,10 +92,12 @@ async def show_stations() -> dict:
 
 @app.get("/get_stations")
 async def get_stations():
+    answer = {"stations": stations}
     if stations is None:
         log.add_info("List of stations hasn't been set. Do it using /start")
+        answer['description'] = "List of stations hasn't been set. Do it using /start"
 
-    return {"stations": stations}
+    return answer
 
 
 @app.get("/get_active_services")
@@ -98,6 +105,9 @@ async def get_active_services():
     stations_dict = await get_all_stations()
     stations = stations_dict['stations']
     arr = []
+
+    if stations is None:
+        return stations_dict
 
     for station in stations:
         service = f"{station}.service"
@@ -124,11 +134,11 @@ async def get_path():
 
 async def prepare_files(date: str):
     log.add_info("Trying to download archive")
-    result = await try_download(start_date)
+    result = await try_download(date)
 
     log.add_info("Unpacking zip")
     if result['status']:
-        result['status'] = await unzip(start_date)
+        result['status'] = await unzip(date)
         log.add_info("Archive has been unpacked")
 
     return result
@@ -144,7 +154,7 @@ async def start_emulation(data: StartEmulation):
 
     start_date = data.start_date.strftime("%Y-%m-%d")
 
-    result = prepare_files(start_date)
+    result = await prepare_files(start_date)
 
     log.add_info("Call check_stations()")
     if result['status'] or isinstance(result['ex'], ArchiveAlreadyDownloaded):
@@ -202,3 +212,4 @@ async def set_next_date():
         print("Could be changed at least 23:59:30")
         log.add_info("Could be changed at least 23:59:30")
     return {"app_date": start_date}
+

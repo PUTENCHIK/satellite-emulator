@@ -72,6 +72,9 @@ async def unzip(date: str):
 
 def check_stations(arr: list):
     stations = []
+    conf = settings()
+    app_port = conf['app_port']
+
     response = requests.get(f"http://127.0.0.1:{app_port}/get_all_stations")
     directories = response.json()['stations']
 
@@ -92,3 +95,4 @@ async def try_download(dt: str, i = 1) -> dict:
         return {'status': False, 'ex': ex}
     except Exception as ex:
         return await try_download(dt, i+1)
+
