@@ -134,12 +134,15 @@ async def get_path():
 
 async def prepare_files(date: str):
     log.add_info("Trying to download archive")
+    """
     result = await try_download(date)
 
     log.add_info("Unpacking zip")
     if result['status']:
         result['status'] = await unzip(date)
         log.add_info("Archive has been unpacked")
+    """
+    result = {"status": True, "ex": None}
 
     return result
 
@@ -155,10 +158,12 @@ async def start_emulation(data: StartEmulation):
     start_date = data.start_date.strftime("%Y-%m-%d")
 
     result = await prepare_files(start_date)
+    print("Result of download", result)
 
     log.add_info("Call check_stations()")
     if result['status'] or isinstance(result['ex'], ArchiveAlreadyDownloaded):
-        stations = check_stations(data.stations)
+        stations = await check_stations(data.stations)
+        print("stations:", stations)
 
         if len(stations) == 0:
             log.add_error("Of the transmitted stations, there are none that were on the transmitted date")

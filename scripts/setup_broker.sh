@@ -12,7 +12,7 @@ sudo apt-get install -y mosquitto
 # Настройка конфигурационного файла для Mosquitto
 cat <<EOT >> /etc/mosquitto/mosquitto.conf
 # Основные настройки брокера
-listener 1883
+listener 1883 0.0.0.0
 max_connections 2000
 allow_anonymous true
 # Настройки логирования

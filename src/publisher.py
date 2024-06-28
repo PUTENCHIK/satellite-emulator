@@ -113,7 +113,7 @@ if __name__ == "__main__":
     while True:
         elem = ["{} {} {} {}".format(
             tec.timestamp,
-            tec.satellite,
+            f"{station}: " + tec.satellite,
             tec.phase_tec,
             tec.p_range_tec) for tec in elem]
         

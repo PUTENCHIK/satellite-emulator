@@ -70,13 +70,18 @@ async def unzip(date: str):
     subprocess.call(f"./scripts/prepare_files.sh {date}", shell=True)
 
 
-def check_stations(arr: list):
+async def check_stations(arr: list):
+    from app import get_all_stations
     stations = []
     conf = settings()
     app_port = conf['app_port']
-
+    
+    directories_dict = await get_all_stations()
+    directories = directories_dict['stations']
+    """
     response = requests.get(f"http://127.0.0.1:{app_port}/get_all_stations")
     directories = response.json()['stations']
+    """
 
     for station in arr:
         if station in directories:
